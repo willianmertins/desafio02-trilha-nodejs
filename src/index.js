@@ -23,14 +23,16 @@ function checksExistsUserAccount(request, response, next) {
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  const user = request.user;
-  
-  const isPro = user.pro;
-  const todosTotal = user.todos.length;
+  const { user } = request;
 
-  if (isPro || todosTotal < 10){
+  if(user.pro){
     return next();
-  };
+  }
+
+  if(!user.pro && user.todos.length < 10 ){
+    return next();
+  }
+
   return response.status(403).json({error: "Não foi possível criar todo"});
 
 }
@@ -41,16 +43,16 @@ function checksTodoExists(request, response, next) {
 
   const isUUID = validate(id);
   if(!isUUID){
-    return response.status(400).json({error: "ID não é valido"});
+    return response.status(400).json({done: true, error: "ID não é valido"});
   };
 
   const user = users.find( (user) => user.username === username);
   if (!user){
-    return response.status(400).json({error: "Usuário não encontrado"});
+    return response.status(404).json({error: "Usuário não encontrado"});
   };
 
-  const userTodo = users.todos.find( (todo) => todo.id === id);
-  if (!userTodo){
+  const todo = user.todos.find( (todo) => todo.id === id);
+  if (!todo){
     return response.status(404).json({error: "Todo não encontrado"});
   };
 
@@ -63,14 +65,9 @@ function checksTodoExists(request, response, next) {
 function findUserById(request, response, next) {
   const { id } = request.params;
 
-  const isUUID = validate(id);
-  if(!isUUID){
-    return response.status(400).json({error: "ID não é valido"});
-  };
-
-  const user = users.find( (user) => user.username === username);
+  const user = users.find( (user) => user.id === id);
   if (!user){
-    return response.status(400).json({error: "Usuário não encontrado"});
+    return response.status(404).json({error: "Usuário não encontrado"});
   };
 
   request.user = user;
